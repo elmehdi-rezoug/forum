@@ -78,10 +78,7 @@ func GetPosts() ([]Post, error) {
 // this function is for filtrt posts
 
 func GetFiltrtPOst(userID int, categories []string, likedByMe, postedByMe bool) ([]Post, error) {
-	fmt.Println("start filtering")
-	fmt.Println("cats", categories)
-	fmt.Println("liked by me", likedByMe)
-	fmt.Println("posted by me", postedByMe)
+
 	db := database.Database
 
 	query := `
@@ -90,7 +87,7 @@ func GetFiltrtPOst(userID int, categories []string, likedByMe, postedByMe bool) 
 		LEFT JOIN POST_CATEGORY pc ON p.id = pc.post_id
 		LEFT JOIN CATEGORY c ON pc.category_id = c.id
 	`
-	// Conditions slice
+
 	conditions := []string{}
 	args := []interface{}{}
 
@@ -101,26 +98,25 @@ func GetFiltrtPOst(userID int, categories []string, likedByMe, postedByMe bool) 
 			placeholders = append(placeholders, "?")
 			args = append(args, cat)
 		}
+
 		conditions = append(conditions, "c.name IN ("+strings.Join(placeholders, ",")+")")
 	}
 
-	// TODO: Implement later
-	// // Filter by posts by me
-	// if postedByMe {
-	// 	conditions = append(conditions, "p.user_id = ?")
-	// 	args = append(args, userID)
-	// }
+	// Filter posts created by user
+	if postedByMe && userID != 0 {
+		conditions = append(conditions, "p.user_id = ?")
+		args = append(args, userID)
+	}
 
-	// // Filter by liked by me
-	// if likedByMe {
-	// 	query += `
-	// 		JOIN LIKES l ON p.id = l.post_id
-	// 	`
-	// 	conditions = append(conditions, "l.user_id = ?")
-	// 	args = append(args, userID)
-	// }
+	// Filter liked posts
+	if likedByMe && userID != 0 {
+		query += `
+			JOIN POST_REACTIONS pr ON p.id = pr.post_id
+		`
+		conditions = append(conditions, "pr.user_id = ? AND pr.is_like = 1")
+		args = append(args, userID)
+	}
 
-	// Combine conditions
 	if len(conditions) > 0 {
 		query += " WHERE " + strings.Join(conditions, " AND ")
 	}
@@ -134,24 +130,40 @@ func GetFiltrtPOst(userID int, categories []string, likedByMe, postedByMe bool) 
 	defer rows.Close()
 
 	posts := []Post{}
+
 	for rows.Next() {
 		var p Post
-		// Fixed: Use correct field names (Id, UserId, Created_at)
+
 		if err := rows.Scan(&p.Id, &p.UserId, &p.Created_at, &p.Title, &p.Text); err != nil {
 			return nil, err
 		}
 
-		// Get categories for the post
-		categories, err := GetCategoriesByPost(p.Id)
+		// get username
+		err := db.QueryRow(
+			"SELECT name FROM users WHERE id = ?",
+			p.UserId,
+		).Scan(&p.Username)
+
 		if err != nil {
 			return nil, err
 		}
-		p.Categories = categories
 
-		// Get comments for the post
+		// get reactions
+		if p.LikeCount, p.DislikeCount, err = GetReactionsByPost(p.Id); err != nil {
+			return nil, err
+		}
+
+		// get comments
 		if p.Comments, err = GetCommentsByPost(p.Id); err != nil {
 			return nil, err
 		}
+
+		// get categories
+		cats, err := GetCategoriesByPost(p.Id)
+		if err != nil {
+			return nil, err
+		}
+		p.Categories = cats
 
 		posts = append(posts, p)
 	}
