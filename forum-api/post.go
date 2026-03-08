@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 	"time"
@@ -9,13 +10,16 @@ import (
 )
 
 type Post struct {
-	Id         int
-	UserId     int
-	Created_at time.Time
-	Title      string
-	Text       string
-	Comments   []Comment
-	Categories []string // Add this field to store category names
+	Id                      int
+	UserId                  int
+	Username                string
+	Created_at              time.Time
+	Title                   string
+	Text                    string
+	LikeCount, DislikeCount int
+	IsLiked                 int // 1:liked, 0:disliked, -1:none
+	Comments                []Comment
+	Categories              []string // Add this field to store category names
 }
 
 func GetPosts() ([]Post, error) {
@@ -35,6 +39,17 @@ func GetPosts() ([]Post, error) {
 		var p Post
 		if err := rows.Scan(&p.Id, &p.UserId, &p.Created_at, &p.Title, &p.Text); err != nil {
 			return nil, fmt.Errorf("getPosts error: %v", err)
+		}
+
+		// get username
+		err := database.Database.QueryRow(
+			"SELECT u.name FROM users u INNER JOIN posts p ON p.user_id = u.id WHERE p.id = ?",
+			p.Id,
+		).Scan(&p.Username)
+
+		// get reactions
+		if p.LikeCount, p.DislikeCount, err = GetReactionsByPost(p.Id); err != nil {
+			return nil, err
 		}
 
 		// Get comments for the post
@@ -228,4 +243,30 @@ func GetPostsOptimized() ([]Post, error) {
 	}
 
 	return posts, nil
+}
+
+func CheckLikedPosts(posts []Post, userId int) {
+	// check if posts are liked
+	for i, post := range posts {
+		err := database.Database.QueryRow(
+			"SELECT is_like FROM post_reactions WHERE user_id = ? AND post_id = ?",
+			userId,
+			post.Id,
+		).Scan(&posts[i].IsLiked)
+		if err == sql.ErrNoRows {
+			posts[i].IsLiked = -1
+		}
+
+		// check if comments are liked
+		for j, comment := range posts[i].Comments {
+			err := database.Database.QueryRow(
+				"SELECT is_like FROM comment_reactions WHERE user_id = ? AND comment_id = ?",
+				userId,
+				comment.Id,
+			).Scan(&posts[i].Comments[j].IsLiked)
+			if err == sql.ErrNoRows {
+				posts[i].Comments[j].IsLiked = -1
+			}
+		}
+	}
 }
