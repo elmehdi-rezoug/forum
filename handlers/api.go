@@ -27,7 +27,7 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 		HandleError(w, http.StatusBadRequest, "Title and text cannot be empty")
 		return
 	}
-if len(title) > 255||len(text) > 1000 {
+	if len(title) > 255 || len(text) > 1000 {
 		HandleError(w, http.StatusBadRequest, "Title cannot exceed 255 characters")
 		return
 	}
@@ -127,7 +127,7 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 		HandleError(w, http.StatusBadRequest, "Invalid post")
 		return
 	}
-if len(text) > 1000 {
+	if len(text) > 1000 {
 		HandleError(w, http.StatusBadRequest, "Comment cannot exceed 1000 characters")
 		return
 	}

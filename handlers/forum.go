@@ -13,8 +13,8 @@ import (
 
 type TemplateData struct {
 	IsLoggedIn bool
-	User User
-	Posts []api.Post
+	User       User
+	Posts      []api.Post
 }
 
 func Forum(w http.ResponseWriter, r *http.Request) {
@@ -104,8 +104,8 @@ func Forum(w http.ResponseWriter, r *http.Request) {
 
 	data := TemplateData{
 		IsLoggedIn: true,
-		User: user,
-		Posts: posts,
+		User:       user,
+		Posts:      posts,
 	}
 
 	if err = t.Execute(&buf, data); err != nil {
