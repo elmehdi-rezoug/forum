@@ -81,6 +81,22 @@ CREATE TABLE IF NOT EXISTS rate_limits (
     PRIMARY KEY (ip, route)
 );
 
+--Categories
+INSERT OR IGNORE INTO CATEGORY (name) VALUES 
+('General'),
+('Lifestyle'),
+('Health & Fitness'),
+('Travel'),
+('Food & Cooking'),
+('Education'),
+('Business'),
+('Finance'),
+('Entertainment'),
+('Sports'),
+('Personal Dev'),
+('Culture'),
+('News');
+
 -- Users (passwords are bcrypt of "password123")
 INSERT OR IGNORE INTO USERS (name, email, password) VALUES
 ('alex_dev', 'alex@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LjZAH9b8oS6'),
