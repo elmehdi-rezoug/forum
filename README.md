@@ -176,5 +176,5 @@ Seed categories loaded automatically on startup: General, Lifestyle, Health & Fi
 
 - thakkou - [Gitea](https://learn.zone01oujda.ma/git/thakkou)
 - halhyane - [Gitea](https://learn.zone01oujda.ma/git/halhyane)
-- erezzoug - [Gitea](https://learn.zone01oujda.ma/git/erezzoug)
+- elmehdi rezoug - [Github](https://github.com/elmehdi-rezoug)
 - herraba - [Gitea](https://learn.zone01oujda.ma/git/herraba)
