@@ -52,32 +52,19 @@ func Forum(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		cookie, cookieErr := r.Cookie("session_id")
-		if cookieErr != nil {
-			// no session — just show all posts, filters ignored
-			posts, err = api.GetPosts()
-			if err != nil {
-				HandleError(w, http.StatusInternalServerError, "Could not load posts")
-				return
-			}
-		} else {
-			userId, err := helper.GetUserIDFromCookie(cookie.Value)
-			if err != nil {
-				// invalid session — show all posts
-				posts, err = api.GetPosts()
-				if err != nil {
-					HandleError(w, http.StatusInternalServerError, "Could not load posts")
-					return
-				}
-			} else {
-				posts, err = api.GetFiltrtPOst(userId, categories, isLiked == "true", isByMe == "true")
-				if err != nil {
-					HandleError(w, http.StatusInternalServerError, "Could not load posts")
-					return
-				}
-			}
-		}
-	}
+    cookie, cookieErr := r.Cookie("session_id")
+    userId := 0
+    if cookieErr == nil {
+        if id, idErr := helper.GetUserIDFromCookie(cookie.Value); idErr == nil {
+            userId = id
+        }
+    }
+    posts, err = api.GetFiltrtPOst(userId, categories, isLiked == "true" && userId != 0, isByMe == "true" && userId != 0)
+    if err != nil {
+        HandleError(w, http.StatusInternalServerError, "Could not load posts")
+        return
+    }
+}
 
 	var buf bytes.Buffer
 	cookie, err := r.Cookie("session_id")
